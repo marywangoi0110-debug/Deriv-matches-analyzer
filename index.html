@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Deriv Matches Analyzer Pro</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="brand">DERIV <span>MATCHES PRO</span></div>
+    <div class="sub">Live digit statistics & market insights</div>
+  </div>
+  <div id="status" class="status offline">● Offline</div>
+</header>
+
+<main class="wrap">
+  <section class="controls card">
+    <div class="field"><label>Market</label><select id="symbol">
+      <option value="1HZ100V">Volatility 100 (1s)</option>
+      <option value="1HZ75V">Volatility 75 (1s)</option>
+      <option value="1HZ50V">Volatility 50 (1s)</option>
+      <option value="1HZ25V">Volatility 25 (1s)</option>
+      <option value="1HZ10V">Volatility 10 (1s)</option>
+      <option value="R_100">Volatility 100</option><option value="R_75">Volatility 75</option>
+      <option value="R_50">Volatility 50</option><option value="R_25">Volatility 25</option><option value="R_10">Volatility 10</option>
+    </select></div>
+    <div class="field"><label>History</label><select id="historySize">
+      <option value="100">100 ticks</option><option value="200" selected>200 ticks</option>
+      <option value="500">500 ticks</option><option value="1000">1000 ticks</option>
+    </select></div>
+    <div class="field"><label>Match digit</label><select id="targetDigit"></select></div>
+    <button id="connectBtn" class="primary">Connect</button><button id="resetBtn" class="secondary">Reset</button>
+    <button id="csvBtn" class="secondary">Export CSV</button>
+  </section>
+
+  <section class="hero-grid">
+    <div class="card metric"><span>Selected digit</span><strong id="selectedDigit">0</strong><small>Target for Matches</small></div>
+    <div class="card metric"><span>Match rate</span><strong id="matchRate">0.0%</strong><small>Current rolling window</small></div>
+    <div class="card metric"><span>Current digit</span><strong id="currentDigit">—</strong><small>Latest tick</small></div>
+    <div class="card metric"><span>Ticks analyzed</span><strong id="tickCount">0</strong><small>Rolling sample</small></div>
+  </section>
+
+  <section class="main-grid">
+    <div class="card">
+      <div class="section-title"><h2>Digit distribution</h2><span id="windowLabel">0 ticks</span></div>
+      <div id="digitGrid" class="digit-grid"></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><h2>Match monitor</h2><span id="signalText" class="neutral">WAITING</span></div>
+      <div class="match-ring"><div><strong id="matchPct">0%</strong><span>observed</span></div></div>
+      <div class="insight-list">
+        <div><span>Expected baseline</span><b>10.0%</b></div>
+        <div><span>Deviation</span><b id="deviation">0.0 pp</b></div>
+        <div><span>Current match streak</span><b id="streak">0</b></div>
+        <div><span>Ticks since match</span><b id="overdue">—</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>Advanced market insights</h2><span id="insightQuality" class="neutral">WAITING FOR DATA</span></div>
+    <div class="insights-grid">
+      <div class="insight-box"><span>25-tick rate</span><b id="rate25">—</b></div>
+      <div class="insight-box"><span>50-tick rate</span><b id="rate50">—</b></div>
+      <div class="insight-box"><span>100-tick rate</span><b id="rate100">—</b></div>
+      <div class="insight-box"><span>200-tick rate</span><b id="rate200">—</b></div>
+      <div class="insight-box"><span>Hot digit</span><b id="hotDigit">—</b></div>
+      <div class="insight-box"><span>Cold digit</span><b id="coldDigit">—</b></div>
+      <div class="insight-box"><span>Target overdue</span><b id="overdue2">—</b></div>
+      <div class="insight-box"><span>Sample strength</span><b id="sampleStrength">—</b></div>
+    </div>
+    <div id="insightMessage" class="insight-message">Collecting ticks…</div>
+    <p class="note">Insights describe historical statistics. They do not guarantee the next tick and should not be treated as a certain trade signal.</p>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>Recent pattern</h2><span>Last 30 digits</span></div>
+    <div id="digitStrip" class="digit-strip">—</div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>Recent ticks</h2><span>Newest first</span></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Time</th><th>Quote</th><th>Digit</th><th>Match</th></tr></thead>
+      <tbody id="ticksTable"></tbody>
+    </table></div>
+  </section>
+
+  <section class="card disclaimer">
+    <b>Important:</b> A 10% value is the mathematical baseline for one chosen digit when digits 0–9 are evenly distributed. Historical frequency, hot/cold status, streaks, or overdue counts do not make the next digit predictable with certainty. This tool only analyzes market data and does not place trades.
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
