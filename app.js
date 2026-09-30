@@ -1,4 +1,4 @@
-const WS_URL="wss://ws.binaryws.com/websockets/v3";
+const WS_URL="wss://ws.derivws.com/websockets/v3?app_id=1089";
 let ws=null,ticks=[],selected=0,reqId=0;
 
 const $=id=>document.getElementById(id);
