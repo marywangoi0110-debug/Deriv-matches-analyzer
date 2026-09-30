@@ -1,2 +1,25 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Fixed</title><style>body{background:#0a0a0a;color:#0f0;font-family:monospace;padding:20px}button{background:#0ff;color:#000;padding:10px;border:none;font-weight:bold}#status1{margin:10px 0;padding:10px;border:1px solid #0ff}.log{background:#111;padding:10px;height:300px;overflow:auto;border:1px solid #333}select{padding:8px;background:#222;color:#0f0}</style></head><body><h3>Deriv Matches - Fixed Kenya</h3><select id="market"><option>R_10</option><option>R_25</option><option>R_50</option><option>R_100</option></select><select id="digit"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select><button id="connectBtn">Connect</button><div id="status1">Disconnected</div><div id="log" class="log"></div><script>const s=document.getElementById('status1'),b=document.getElementById('connectBtn'),l=document.getElementById('log');function lg(m){l.innerHTML+=m+"<br>";l.scrollTop=l.scrollHeight}let ws;b.onclick=()=>{const market=document.getElementById('market').value;lg("Connecting to ws.derivws.com app_id 34xPC5IwhjNLtq5H0DQU2...");s.textContent="Connecting...";ws=new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=34xPC5IwhjNLtq5H0DQU2");ws.onopen=()=>{s.textContent="Online Connected";b.textContent="Connected";lg("OPEN Connected");ws.send(JSON.stringify({ticks:market,subscribe:1}))};ws.onmessage=e=>{const d=JSON.parse(e.data);if(d.tick){lg("Tick "+d.tick.quote+" digit "+String(d.tick.quote).slice(-1))}};ws.onerror=()=>lg("Error");ws.onclose=e=>lg("Closed "+e.code)};</script></body></html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Fixed</title><style>body{background:#0a0a0a;color:#0f0;font-family:monospace;padding:20px}button{background:#0ff;color:#000;padding:10px;border:none;font-weight:bold}#status1{margin:10px 0;padding:10px;border:1px solid #0ff}.log{background:#111;padding:10px;height:300px;overflow:auto;border:1px solid #333}select{padding:8px;background:#222;color:#0f0}</style></head><body><h3>Deriv Matches - Fixed Kenya v2</h3><select id="market"><option>R_10</option><option>R_25</option><option>R_50</option><option>R_100</option></select><select id="digit"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select><button id="connectBtn">Connect</button><div id="status1">Disconnected</div><div id="log" class="log"></div><script>
+const s=document.getElementById('status1'),b=document.getElementById('connectBtn'),l=document.getElementById('log');
+function lg(m){l.innerHTML+=m+"<br>";l.scrollTop=l.scrollHeight}
+let ws;
+const APP_ID="34xPC5IwhjNLtq5HODQU2";
+const SERVERS=["wss://ws.deriv.com/websockets/v3?app_id=","wss://ws.derivws.com/websockets/v3?app_id=","wss://ws.binaryws.com/websockets/v3?app_id="];
+let serverIndex=0;
+function connect(){
+ const market=document.getElementById('market').value;
+ const url=SERVERS[serverIndex]+APP_ID;
+ lg("Trying "+SERVERS[serverIndex]+"...");
+ s.textContent="Connecting to server "+(serverIndex+1)+"...";
+ ws=new WebSocket(url);
+ ws.onopen=()=>{s.textContent="Online Connected via Server "+(serverIndex+1);b.textContent="Connected";lg("OPEN Connected on "+url);ws.send(JSON.stringify({ticks:market,subscribe:1}))};
+ ws.onmessage=e=>{const d=JSON.parse(e.data);if(d.tick){lg("Tick "+d.tick.quote+" digit "+String(d.tick.quote).slice(-1))}};
+ ws.onerror=()=>{lg("Error on server "+(serverIndex+1));};
+ ws.onclose=e=>{
+   lg("Closed "+e.code+" on server "+(serverIndex+1));
+   if(e.code==1006 && serverIndex < SERVERS.length-1){serverIndex++; lg("Retrying next server..."); setTimeout(connect,1000);}
+   else if(e.code==1006){s.textContent="All servers blocked - Tumia WARP"; }
+ }
+}
+b.onclick=()=>{serverIndex=0; if(ws) ws.close(); connect();};
+</script></body></html>
