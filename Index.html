@@ -1,1 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Deriv Analyzer</title>
+<style>
+body{background:#0f1115;color:#fff;font-family:Arial;padding:15px}
+button{padding:12px 18px;background:#00ff88;border:none;border-radius:6px;font-weight:bold}
+select{padding:8px;border-radius:5px}
+.card{background:#1a1d24;padding:12px;border-radius:8px;margin:10px 0}
+#status{font-weight:bold}
+</style>
+</head>
+<body>
+<h2>Deriv Matches Analyzer</h2>
+<div id="status">● Offline</div>
 
+<div class="card">
+<select id="symbol"><option value="R_100">R_100</option><option value="R_50">R_50</option><option value="R_25">R_25</option></select>
+<select id="target"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select>
+<button onclick="connect()">Connect</button>
+<button onclick="location.reload()">Reset</button>
+</div>
+
+<div class="card">
+Current: <b id="cur">-</b> | Count: <b id="cnt">0</b> | Rate: <b id="rate">0%</b>
+</div>
+
+<div class="card" id="dist">Press Connect</div>
+
+<script>
+let ws, ticks=[];
+function connect(){
+ if(ws) ws.close();
+ document.getElementById('status').textContent='● Connecting...';
+ document.getElementById('status').style.color='orange';
+ ws=new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=1089');
+ ws.onopen=()=>{
+  let s=document.getElementById('symbol').value;
+  ws.send(JSON.stringify({ticks_history:s,count:1000,end:'latest',style:'ticks'}));
+  ws.send(JSON.stringify({ticks:s,subscribe:1}));
+ };
+ ws.onmessage=(e)=>{
+  let d=JSON.parse(e.data);
+  if(d.history) ticks=d.history.prices;
+  if(d.tick){ticks.push(d.tick.quote); if(ticks.length>1000) ticks.shift();}
+  let counts=Array(10).fill(0);
+  ticks.forEach(p=>{let str=p.toString(); let dg=parseInt(str[str.length-1]); if(!isNaN(dg)) counts[dg]++;});
+  let total=ticks.length||1;
+  document.getElementById('status').textContent='● Connected ('+ticks.length+')';
+  document.getElementById('status').style.color='#00ff88';
+  document.getElementById('cnt').textContent=ticks.length;
+  if(ticks.length){let last=ticks[ticks.length-1].toString(); document.getElementById('cur').textContent=last[last.length-1];}
+  let tgt=document.getElementById('target').value;
+  document.getElementById('rate').textContent=((counts[tgt]/total)*100).toFixed(1)+'%';
+  let h=''; for(let i=0;i<10;i++){ let pct=((counts[i]/total)*100).toFixed(1); h+=i+': '+counts[i]+' ('+pct+'%)<br>'; }
+  document.getElementById('dist').innerHTML=h;
+ };
+ ws.onerror=()=>{document.getElementById('status').textContent='● Error'; document.getElementById('status').style.color='red';};
+ ws.onclose=()=>{document.getElementById('status').textContent='● Offline';};
+}
+</script>
+</body>
+</html>
