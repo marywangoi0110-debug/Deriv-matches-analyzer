@@ -1,4 +1,4 @@
-const WS_URL="wss://api.derivws.com/trading/v1/options/ws/public";
+const WS_URL="wss://ws.binaryws.com/websockets/v3";
 let ws=null,ticks=[],selected=0,reqId=0;
 
 const $=id=>document.getElementById(id);
