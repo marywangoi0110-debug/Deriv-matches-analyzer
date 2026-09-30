@@ -1,72 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deriv Matches Analyzer - WARP Fixed</title>
+<title>Deriv Analyzer - Fixed Kenya</title>
 <style>
-body{background:#0e0e10;color:#fff;font-family:Arial;text-align:center;padding:20px}
-#status{padding:12px;border-radius:8px;margin:10px;font-weight:bold;background:#400}
-#status.online{background:#040}
-button{background:#2a5bd7;color:white;border:none;padding:12px 25px;border-radius:8px;font-size:16px;margin:5px}
-#log{background:#000;color:#0f0;text-align:left;padding:10px;height:250px;overflow:auto;border-radius:8px;margin-top:15px;font-family:monospace;font-size:12px}
-select{padding:10px;border-radius:6px;margin:5px}
+body{background:#0a0a0a;color:#0f0;font-family:monospace;padding:20px}
+button{background:#0ff;color:#000;padding:10px 20px;border:none;cursor:pointer;font-weight:bold}
+#status1{margin:10px 0;padding:10px;border:1px solid #0ff}
+.log{background:#111;padding:10px;height:250px;overflow:auto;border:1px solid #333}
+select{padding:8px;margin:5px;background:#222;color:#0f0;border:1px solid #0ff}
 </style>
 </head>
 <body>
-<h2>Deriv Matches Analyzer</h2>
-<div id="status">🔴 Offline - Press Connect</div>
-<div>
-<select id="market"><option value="R_100">Volatility 100</option><option value="R_50">Volatility 50</option><option value="R_25">Volatility 25</option><option value="R_10">Volatility 10</option></select>
-<select id="digit"><option value="0">Digit 0</option><option value="1">Digit 1</option><option value="2">Digit 2</option><option value="3">Digit 3</option><option value="4">Digit 4</option><option value="5">Digit 5</option><option value="6">Digit 6</option><option value="7">Digit 7</option><option value="8">Digit 8</option><option value="9">Digit 9</option></select>
-</div>
+<h3>Deriv Matches Analyzer - Fixed (No VPN)</h3>
+<select id="market"><option value="R_10">R_10</option><option value="R_25">R_25</option><option value="R_50">R_50</option><option value="R_100">R_100</option></select>
+<select id="digit"><option value="0">0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select>
 <button id="connectBtn">Connect</button>
-<button onclick="location.reload()">Reset</button>
-<div>Matched: <span id="matched">0 / 0 = 0%</span> | Last: <span id="last">-</span></div>
-<div id="log">Press Connect to start...<br></div>
+<div id="status1">Disconnected</div>
+<div id="log" class="log"></div>
 <script>
-let ws=null, total=0, matches=0;
-const statusEl=document.getElementById('status'), logEl=document.getElementById('log'), matchedEl=document.getElementById('matched'), lastEl=document.getElementById('last'), btn=document.getElementById('connectBtn');
-function log(m){logEl.innerHTML+=new Date().toLocaleTimeString()+' '+m+'<br>';logEl.scrollTop=logEl.scrollHeight;}
-function updateStats(digit,lastDigit){
- total++; if(digit==lastDigit)matches++;
- let pct=total?((matches/total)*100).toFixed(1):0;
- matchedEl.textContent=`${matches} / ${total} = ${pct}%`;
- lastEl.textContent=lastDigit;
+const status1=document.getElementById('status1');
+const btn=document.getElementById('connectBtn');
+const logEl=document.getElementById('log');
+function log(m){logEl.innerHTML+=m+"<br>";logEl.scrollTop=logEl.scrollHeight}
+const endpoints=["wss://ws.derivws.com/websockets/v3?app_id=1089","wss://ws.deriv.com/websockets/v3?app_id=1089","wss://ws.derivws.com/websockets/v3?app_id=1089"];
+function connectOne(url){return new Promise((res,rej)=>{const ws=new WebSocket(url);setTimeout(()=>res(ws),1000);ws.onerror=()=>rej(new Error("fail"))})}
+btn.onclick=async()=>{
+const target=document.getElementById('market').value;
+status1.textContent="Connecting...";btn.textContent="Connecting...";log("Connecting to "+target);
+for(let url of endpoints){try{log("Trying "+url);const ws=await connectOne(url);status1.textContent="Online 🟢 Connected";btn.textContent="Connected";log("SUCCESS "+url);ws.send(JSON.stringify({ticks:target,subscribe:1}));ws.onmessage=e=>{let d=JSON.parse(e.data);if(d.tick)log("Tick "+d.tick.quote+" digit "+String(d.tick.quote).slice(-1))};return}catch(e){log("Failed "+url)}}
+status1.textContent="All endpoints failed";btn.textContent="Retry";
 }
-async function doConnect(){
- if(ws && ws.readyState===1){ws.close(); return;}
- const market=document.getElementById('market').value;
- const targetDigit=document.getElementById('digit').value;
- const endpoints=["wss://ws.derivws.com/websockets/v3?app_id=36197","wss://ws.binaryws.com/websockets/v3?app_id=36197","wss://frontend.derivws.com/websockets/v3?app_id=36197"];
- statusEl.textContent="🟡 Connecting..."; statusEl.className=""; btn.textContent="Connecting..."; log(`WARP must be ON. Trying ${endpoints.length} endpoints...`);
- for(let url of endpoints){
-   try{ await connectOne(url, market, targetDigit); return; }catch(e){ log(`❌ Failed ${url}: ${e.message}`); }
- }
- statusEl.textContent="🔴 All endpoints failed - Check WARP is Connected"; statusEl.className=""; btn.textContent="Connect"; log("💡 Make sure 1.1.1.1 WARP says Connected and try again");
-}
-function connectOne(url, market, targetDigit){
- return new Promise((resolve,reject)=>{
-   log(`Trying: ${url}`);
-   ws=new WebSocket(url);
-   let timeout=setTimeout(()=>{ ws.close(); reject(new Error("Timeout 8s")); },8000);
-   ws.onopen=()=>{ clearTimeout(timeout); log(`✅ Opened: ${url}`); statusEl.textContent="🟢 Online - Subscribing..."; statusEl.className="online"; ws.send(JSON.stringify({ticks:market})); btn.textContent="Disconnect"; resolve(); };
-   ws.onmessage=(e)=>{
-     try{
-       const data=JSON.parse(e.data);
-       if(data.tick){
-         const quote=data.tick.quote.toString(); const lastDigit=quote.slice(-1);
-         updateStats(targetDigit,lastDigit);
-         if(total%5==0) log(`📈 ${data.tick.symbol} ${quote} -> last=${lastDigit} target=${targetDigit} ${lastDigit==targetDigit?'✅MATCH':'❌'}`);
-         statusEl.textContent=`🟢 Online - ${data.tick.symbol}: ${quote}`;
-       }else if(data.error){ log(`⚠️ API Error: ${data.error.message}`); }
-     }catch(err){ log(`Raw: ${e.data.slice(0,100)}`); }
-   };
-   ws.onerror=()=>{ clearTimeout(timeout); log("❌ WebSocket error event"); reject(new Error("onerror")); };
-   ws.onclose=(ev)=>{ clearTimeout(timeout); log(`🔌 Closed code=${ev.code} reason=${ev.reason||'none'}`); if(statusEl.textContent.includes("Connecting")){ reject(new Error(`closed ${ev.code}`)); }else{ statusEl.textContent=`🔴 Offline code ${ev.code}`; btn.textContent="Connect"; } };
- });
-}
-btn.onclick=doConnect;
 </script>
 </body>
 </html>
