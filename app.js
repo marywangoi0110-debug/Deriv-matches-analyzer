@@ -119,3 +119,4 @@ function exportCSV(){
 }
 $("connectBtn").onclick=connect;$("resetBtn").onclick=()=>{ticks=[];render()};$("csvBtn").onclick=exportCSV;
 symbolEl.onchange=connect;historyEl.onchange=connect;targetEl.onchange=render;render();
+connect();
