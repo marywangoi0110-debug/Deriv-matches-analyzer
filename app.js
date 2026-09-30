@@ -35,7 +35,8 @@ function connect(){
   ws.onclose=()=>setStatus(false,"Offline");
 }
 
-function lastDigit(q){
+ws.onerror=(e)=>setStatus(false,"WebSocket error");
+ws.onclose=(e)=>setStatus(false,"Closed: "+e.code);
   let s=String(q);
   if(/e/i.test(s))s=Number(q).toFixed(12).replace(/0+$/,"");
   const dot=s.indexOf(".");
