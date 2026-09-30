@@ -31,11 +31,7 @@ function connect(){
     }
     if(d.msg_type==="tick"&&d.tick){
       ticks.push({quote:d.tick.quote,epoch:d.tick.epoch});
-      const max=Number(historyEl.value);if(ticks.length>max)ticks=ticks.slice(-max);
-      render();
-    }
-  };
-  ws.onerror=()=>setStatus(false,"Connection error");
+      const max=Number(historyEl.value);if(ticks.length>max)ticks=ticks.slice(-m
   ws.onclose=()=>setStatus(false,"Offline");
 }
 
