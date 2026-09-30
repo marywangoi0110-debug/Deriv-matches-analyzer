@@ -1,45 +1,40 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Deriv Analyzer</title>
-<style>body{background:#0F1115;color:#FFF;font-family:Arial;padding:10px}button{padding:10px;background:#0077FF;border:none;border-radius:5px;color:#FFF}select{padding:7px}#status{font-weight:bold}.card{background:#1A1D26;padding:10px;border-radius:10px;margin:10px 0}</style>
-</head><body>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Deriv Matches</title>
+<style>
+body{background:#0f1115;color:#fff;font-family:sans-serif;padding:15px;text-align:center}
+#status{padding:10px;font-weight:bold;border-radius:6px;margin:10px 0}
+button{padding:12px 18px;margin:5px;border:none;border-radius:8px;background:#2962ff;color:#fff;font-weight:bold;font-size:16px}
+select{padding:10px;border-radius:6px;margin:5px}
+#log{background:#1c1f2a;padding:10px;border-radius:8px;text-align:left;height:300px;overflow:auto;margin-top:10px}
+</style>
+</head>
+<body>
 <h2>Deriv Matches Analyzer</h2>
-<div id="status">Offline</div>
-<div class="card">
-<select id="symbol"><option value="R_100">R_100</option><option value="R_50">R_50</option><option value="R_25">R_25</option></select>
-<select id="target"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select>
+<div id="status" style="background:#400;color:#f88">● Offline - Press Connect</div>
+<select id="market"><option value="R_100">Volatility 100</option><option value="R_50">Vol 50</option><option value="R_25">Vol 25</option><option value="R_10">Vol 10</option></select>
+<select id="digit"><option value="0">Digit 0</option><option value="1">Digit 1</option><option value="2">Digit 2</option><option value="3">Digit 3</option><option value="4">Digit 4</option><option value="5">Digit 5</option><option value="6">Digit 6</option><option value="7">Digit 7</option><option value="8">Digit 8</option><option value="9">Digit 9</option></select>
+<br>
 <button onclick="connect()">Connect</button>
-<button onclick="location.reload()">Reset</button>
-</div>
-<div class="card">ID: <b id="curr">-</b> | Count: <b id="cnt">0</b> | Rate: <b id="rate">0%</b></div>
-<div class="card" id="dist">Press Connect</div>
+<button onclick="reset()">Reset</button>
+<div>Matched: <span id="cnt">0</span> / <span id="tot">0</span> = <span id="rate">0%</span> | Last: <span id="last">-</span></div>
+<div id="log">Press Connect to start...</div>
 <script>
-let ws,ticks=[];
+let ws, cnt=0, tot=0;
 function connect(){
- if(ws) ws.close();
- document.getElementById('status').textContent='Connecting...';
- document.getElementById('status').style.color='orange';
- ws=new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=1089');
- ws.onopen=()=>{
-  let s=document.getElementById('symbol').value;
-  ws.send(JSON.stringify({ticks_history:s,count:1000,end:'latest',style:'ticks'}));
-  ws.send(JSON.stringify({ticks:s,subscribe:1}));
- };
- ws.onmessage=(msg)=>{
-  let d=JSON.parse(msg.data);
-  if(d.history){ticks=d.history.prices.map(p=>{let q=(p.toString().split('.')[1]||'0').slice(-1);ticks.length>=1000&&ticks.shift();return parseInt(q)});}
-  if(d.tick){let q=(d.tick.quote.toString().split('.')[1]||'0').slice(-1);ticks.length>=1000&&ticks.shift();ticks.push(parseInt(q));}
-  let c=Array(10).fill(0);ticks.forEach(n=>c[n]++);let tot=ticks.length;
-  document.getElementById('status').textContent='Connected ('+tot+')';document.getElementById('status').style.color='#00FF88';
-  document.getElementById('curr').textContent=ticks.length?String(ticks[ticks.length-1]):'-';
-  document.getElementById('cnt').textContent=tot;
-  let tar=parseInt(document.getElementById('target').value);
-  let rate=tot?(c[tar]/tot*100).toFixed(1):0;document.getElementById('rate').textContent=rate+'%';
-  let h='';for(let i=0;i<10;i++){let pct=tot?(c[i]/tot*100).toFixed(1):0;h+=i+' : '+c[i]+' ('+pct+'%)<br>';}
-  document.getElementById('dist').innerHTML=h;
- };
- ws.onerror=()=>{document.getElementById('status').textContent='Error - Use VPN';document.getElementById('status').style.color='red';};
- ws.onclose=()=>{document.getElementById('status').textContent='Offline';document.getElementById('status').style.color='red';};
+ document.getElementById('status').innerHTML='🟠 Connecting...'; document.getElementById('status').style.background='#432'; 
+ document.getElementById('log').innerHTML='Connecting...\n'+document.getElementById('log').innerHTML;
+ ws=new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=1089');
+ ws.onopen=()=>{ws.send(JSON.stringify({ticks:document.getElementById('market').value})); document.getElementById('status').innerHTML='🟢 Connected'; document.getElementById('status').style.background='#0a3'; document.getElementById('status').style.color='#fff';};
+ ws.onmessage=(e)=>{let d=JSON.parse(e.data); if(d.tick){let p=d.tick.quote.toString(); let ld=parseInt(p.slice(-1)); let target=parseInt(document.getElementById('digit').value); tot++; document.getElementById('tot').innerText=tot; document.getElementById('last').innerText=ld+' ('+p+')'; let isMatch=ld==target; if(isMatch)cnt++; document.getElementById('cnt').innerText=cnt; document.getElementById('rate').innerText=(tot? (cnt/tot*100).toFixed(1):0)+'%'; let line=(isMatch?'✅ MATCH':'❌')+' '+p+' -> '+ld+' Target:'+target+' '+new Date().toLocaleTimeString(); document.getElementById('log').innerHTML=line+'\n'+document.getElementById('log').innerHTML; }};
+ ws.onerror=()=>{document.getElementById('status').innerHTML='🔴 Error - Check WARP is ON'; document.getElementById('status').style.background='#400';};
+ ws.onclose=()=>{document.getElementById('status').innerHTML='🔴 Offline'; document.getElementById('status').style.background='#400';};
 }
+function reset(){cnt=0;tot=0;document.getElementById('cnt').innerText=0;document.getElementById('tot').innerText=0;document.getElementById('rate').innerText='0%';document.getElementById('log').innerHTML='Reset done.'; if(ws)ws.close();}
+document.getElementById('market').onchange=()=>{if(ws)ws.close(); setTimeout(connect,500);};
 </script>
-</body></html>                                                                                                                            </html>ķo
+</body>
+</html>
