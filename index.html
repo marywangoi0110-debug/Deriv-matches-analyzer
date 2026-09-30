@@ -38,7 +38,7 @@ async function doConnect(){
  if(ws && ws.readyState===1){ws.close(); return;}
  const market=document.getElementById('market').value;
  const targetDigit=document.getElementById('digit').value;
- const endpoints=["wss://ws.derivws.com/websockets/v3?app_id=36197","wss://ws.binaryws.com/websockets/v3?app_id=36197","wss://ws.deriv.com/websockets/v3?app_id=36197"];
+ const endpoints=["wss://ws.derivws.com/websockets/v3?app_id=36197","wss://ws.binaryws.com/websockets/v3?app_id=36197","wss://frontend.derivws.com/websockets/v3?app_id=36197"];
  statusEl.textContent="🟡 Connecting..."; statusEl.className=""; btn.textContent="Connecting..."; log(`WARP must be ON. Trying ${endpoints.length} endpoints...`);
  for(let url of endpoints){
    try{ await connectOne(url, market, targetDigit); return; }catch(e){ log(`❌ Failed ${url}: ${e.message}`); }
