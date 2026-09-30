@@ -3,12 +3,12 @@
 const s=document.getElementById('status1'),b=document.getElementById('connectBtn'),l=document.getElementById('log');
 function lg(m){l.innerHTML+=m+"<br>";l.scrollTop=l.scrollHeight}
 let ws;
-const APP_ID="34xPC5IwhjNLtq5HODQU2";
-const SERVERS=["wss://ws.deriv.com/websockets/v3?app_id=","wss://ws.derivws.com/websockets/v3?app_id=","wss://ws.binaryws.com/websockets/v3?app_id="];
+const APP_ID = "34y2tHkwIrr05Hv09SVXf";
+const SERVERS = ["wss://ws.deriv.com/websockets/v3?app_id=", "wss://ws.derivws.com/websockets/v3?app_id="];
 let serverIndex=0;
 function connect(){
  const market=document.getElementById('market').value;
- const url=SERVERS[serverIndex]+APP_ID;
+ const url = SERVERS[serverIndex] + APP_ID;
  lg("Trying "+SERVERS[serverIndex]+"...");
  s.textContent="Connecting to server "+(serverIndex+1)+"...";
  ws=new WebSocket(url);
