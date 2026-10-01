@@ -1,105 +1,85 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Deriv Matches - Fixed Kenya v2</title>
-  const SERVERS = ["wss://ws.deriv.com/websockets/v3?app_id=", "wss://ws.derivws.com/websockets/v3?app_id=", "wss://ws.binaryws.com/websockets/v3?app_id="];
-    body { background-color: #000; color: #00ff00; font-family: monospace; padding: 15px; }
-    h3 { color: #00ff00; }
-    select, button { padding: 8px 12px; margin: 5px; background: #222; color: #fff; border: 1px solid #00ff00; font-weight: bold; }
-    button { background: #00ffff; color: #000; cursor: pointer; }
-    #status1 { border: 1px solid #00ff00; padding: 10px; margin-top: 10px; font-weight: bold; }
-    #log { border: 1px solid #333; height: 250px; overflow-y: auto; padding: 10px; margin-top: 10px; color: #00ff00; background: #111; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Deriv Matches - Fixed</title>
+<style>
+body{background:#000;color:#0f0;font-family:monospace;padding:15px}
+h3{color:#0f0}
+select,button{padding:8px 12px;margin:5px;background:#222;color:#fff;border:1px solid #0f0;font-weight:bold}
+button{background:#0ff;color:#000;cursor:pointer}
+#status1{border:1px solid #0f0;padding:10px;margin-top:10px;font-weight:bold}
+#log{border:1px solid #333;height:300px;overflow-y:auto;padding:10px;margin-top:10px;color:#0f0;background:#111}
+</style>
 </head>
 <body>
+<h3>Deriv Matches - Fixed Kenya v3</h3>
+<select id="market"><option>R_10</option><option>R_25</option><option>R_50</option><option>R_75</option><option>R_100</option></select>
+<select id="digit"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select>
+<button onclick="start()">Connect</button>
+<div id="status1">Ready</div>
+<div id="log"></div>
 
-  <h3>Deriv Matches - Fixed Kenya v2</h3>
+<script>
+const APP_ID = 1089; // HII NDIO FIX - usiweke token ndefu hapa!
+const SERVERS = [
+  `wss://ws.deriv.com/websockets/v3?app_id=${APP_ID}`,
+  `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`,
+  `wss://ws.binaryws.com/websockets/v3?app_id=${APP_ID}`
+];
+let ws, serverIndex = 0;
 
-  <div>
-    <select id="market">
-      <option value="R_10">R_10</option>
-      <option value="R_25">R_25</option>
-      <option value="R_50">R_50</option>
-      <option value="R_75">R_75</option>
-      <option value="R_100">R_100</option>
-    </select>
-    
-    <select id="prediction">
-      <option value="0">0</option>
-      <option value="1">1</option>
-      <option value="2">2</option>
-      <option value="3">3</option>
-      <option value="4">4</option>
-      <option value="5">5</option>
-      <option value="6">6</option>
-      <option value="7">7</option>
-      <option value="8">8</option>
-      <option value="9">9</option>
-    </select>
+function log(msg){
+  const el = document.getElementById('log');
+  el.innerHTML += msg + "<br>";
+  el.scrollTop = el.scrollHeight;
+}
 
-    <button id="connectBtn">Connect</button>
-  </div>
+function connect(){
+  if(serverIndex >= SERVERS.length){
+    document.getElementById('status1').innerText = "All servers blocked - Jaribu na Mobile Data";
+    return;
+  }
+  const url = SERVERS[serverIndex];
+  log("Trying " + url);
+  document.getElementById('status1').innerText = "Connecting server " + (serverIndex+1);
 
-  <div id="status1">Ready to connect...</div>
-  <div id="log"></div>
+  ws = new WebSocket(url);
 
-  <script>
-    const s = document.getElementById('status1');
-    const b = document.getElementById('connectBtn');
-    const l = document.getElementById('log');
+  ws.onopen = () => {
+    document.getElementById('status1').innerText = "OPEN Connected - server " + (serverIndex+1);
+    log("Connected!");
+    const market = document.getElementById('market').value;
+    ws.send(JSON.stringify({ticks: market}));
+  };
 
-    function lg(m) {
-      l.innerHTML += m + "<br>";
-      l.scrollTop = l.scrollHeight;
+  ws.onerror = () => {
+    log("Error on server " + (serverIndex+1));
+  };
+
+  ws.onclose = (e) => {
+    log("Closed " + e.code + " on server " + (serverIndex+1));
+    serverIndex++;
+    if(serverIndex < SERVERS.length){
+      log("Retrying next server...");
+      setTimeout(connect, 1000);
     }
+  };
 
-    let ws;
-    const APP_ID = "34y2tHkwIrr05Hv09SVXf";
-    const SERVERS = ["wss://ws.deriv.com/websockets/v3?app_id=", "wss://ws.derivws.com/websockets/v3?app_id="];
-    let serverIndex = 0;
-
-    function connect() {
-      const market = document.getElementById('market').value;
-      const url = SERVERS[serverIndex] + APP_ID;
-      
-      lg("Trying " + url + "...");
-      s.textContent = "Connecting to server " + (serverIndex + 1) + "...";
-      
-      ws = new WebSocket(url);
-
-      ws.onopen = () => {
-        s.textContent = "Online Connected";
-        lg("Connected successfully!");
-      };
-
-      ws.onmessage = e => {
-        lg("Received: " + e.data);
-      };
-
-      ws.onerror = () => {
-        lg("Error on server " + (serverIndex + 1));
-      };
-
-      ws.onclose = e => {
-        lg("Closed " + e.code + " on server " + (serverIndex + 1));
-        if (e.code == 1006 && serverIndex < SERVERS.length - 1) {
-          serverIndex++;
-          lg("Retrying next server...");
-          connect();
-        } else if (e.code == 1006) {
-          s.textContent = "All servers blocked - Tumia WARP";
-        }
-      };
+  ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    if(data.tick){
+      log("Tick: " + data.tick.quote + " | Last digit: " + String(data.tick.quote).slice(-1));
     }
+  };
+}
 
-    b.onclick = () => {
-      serverIndex = 0;
-      if (ws) ws.close();
-      connect();
-    };
-  </script>
-
+function start(){
+  serverIndex = 0;
+  document.getElementById('log').innerHTML = "";
+  connect();
+}
+</script>
 </body>
 </html>
